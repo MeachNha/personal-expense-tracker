@@ -41,6 +41,11 @@ Neon does not expose your tables over HTTP unless you deliberately enable its Da
 2. Add env vars `DATABASE_URL` and optionally `APP_ACCESS_KEY` (Neon also has a Vercel integration that adds `DATABASE_URL` for you).
 3. Deploy.
 
+## Install on mobile
+- **iPhone:** open the site in Safari, tap **Share**, then **Add to Home Screen**.
+- **Android:** open the site in Chrome, tap **⋮**, then **Install app** or **Add to Home screen**.
+- The app uses the supplied wallet artwork for its home-screen icon and caches the app shell for offline launch. Expense data still needs an internet connection.
+
 ## Private access (no login page)
 - **Hosting:** Vercel → Settings → Deployment Protection → enable *Vercel Authentication*. Covers the site and `/api`.
 - **API key (recommended):** set `APP_ACCESS_KEY` to a long random string. Requests without the matching `x-access-key` header get 401. Enter it once in Settings (stored in that browser only).
