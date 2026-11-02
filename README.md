@@ -3,9 +3,8 @@
 React (Vite, Tailwind, Recharts) → Express API (`backend/`) → Neon PostgreSQL.
 
 The React frontend lives in `src/`. The Express backend and database access live in
-`backend/`; `api/[...path].js` exposes the Express app as a Vercel serverless
-function, and `api/[resource]/[...path].js` forwards nested API routes such as
-session reports and record updates to that same app. The Vercel Hobby plan and Neon Free plan can be used to deploy this
+`backend/`; `api/index.js` exposes the Express app as a Vercel serverless
+function, while `vercel.json` routes all `/api/*` requests through it. The Vercel Hobby plan and Neon Free plan can be used to deploy this
 personal project without a hosting subscription, subject to their current usage
 limits and terms.
 

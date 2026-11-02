@@ -258,7 +258,11 @@ export default async function handleApiRequest(req, res) {
     if (key && !same(String(req.headers["x-access-key"] || ""), key))
       throw new HttpError(401, "Unauthorized");
     const url = new URL(req.url, "http://localhost");
-    const parts = url.pathname.split("/").filter(Boolean).slice(1);
+    const rewrittenPath = url.searchParams.get("path");
+    const parts = rewrittenPath
+      ? rewrittenPath.split("/").filter(Boolean)
+      : url.pathname.split("/").filter(Boolean).slice(1);
+    if (rewrittenPath) url.searchParams.delete("path");
     const data = await route(
       req.method,
       parts,
