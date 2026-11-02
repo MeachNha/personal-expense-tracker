@@ -1,4 +1,5 @@
 import { cloneElement, createContext, isValidElement, useContext, useEffect, useId, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { addMonths, eachDayOfInterval, endOfMonth, format, getDay, isValid, parse, parseISO, startOfMonth, subMonths } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { CalendarDays, ChevronLeft, ChevronRight, LoaderCircle, X, Utensils, Car, ShoppingBag, Receipt, HeartPulse, Film, Users, GraduationCap, Package, Home, Plane, Gift } from 'lucide-react';
@@ -78,7 +79,6 @@ export function DateInput({ className = '', value = '', onChange, min, max, requ
   const generatedId = useId();
   const inputId = id || generatedId;
   const popoverId = `${inputId}-calendar`;
-  const wrapperRef = useRef(null);
   const inputRef = useRef(null);
   const [draft, setDraft] = useState(value ? format(parseISO(value), 'MM/dd/yyyy') : '');
   const [month, setMonth] = useState(() => startOfMonth(value ? parseISO(value) : new Date()));
@@ -100,18 +100,11 @@ export function DateInput({ className = '', value = '', onChange, min, max, requ
 
   useEffect(() => {
     if (!open) return undefined;
-    const closeOnOutsideClick = (event) => {
-      if (!wrapperRef.current?.contains(event.target)) setOpen(false);
-    };
     const closeOnEscape = (event) => {
       if (event.key === 'Escape') setOpen(false);
     };
-    document.addEventListener('pointerdown', closeOnOutsideClick);
     document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      document.removeEventListener('pointerdown', closeOnOutsideClick);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
+    return () => document.removeEventListener('keydown', closeOnEscape);
   }, [open]);
 
   const withinRange = (iso) => (!min || iso >= min) && (!max || iso <= max);
@@ -153,7 +146,7 @@ export function DateInput({ className = '', value = '', onChange, min, max, requ
   const canGoForward = !max || toIsoDate(startOfMonth(nextMonth)) <= max;
 
   return (
-    <span ref={wrapperRef} className={`relative block ${className}`}>
+    <span className={`relative block ${className}`}>
       <input
         {...props}
         ref={inputRef}
@@ -187,11 +180,22 @@ export function DateInput({ className = '', value = '', onChange, min, max, requ
       >
         <CalendarDays size={18} aria-hidden="true" />
       </button>
-      {open && (
-        <div id={popoverId} role="dialog" aria-label="Choose a date" className="date-calendar absolute right-0 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+      {open && createPortal(
+        <div
+          className="fixed inset-0 z-[70] grid place-items-center bg-black/30 p-4"
+          onClick={() => setOpen(false)}
+        >
+        <div
+          id={popoverId}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={`${popoverId}-title`}
+          className="date-calendar max-h-[calc(100dvh-2rem)] w-72 max-w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+          onClick={(event) => event.stopPropagation()}
+        >
           <div className="mb-3 flex items-center justify-between">
             <button type="button" className="calendar-nav" aria-label="Previous month" disabled={!canGoBack} onClick={() => setMonth(previousMonth)}><ChevronLeft size={18} /></button>
-            <h2 className="text-sm font-semibold" aria-live="polite">{format(month, 'MMMM yyyy', { locale: enUS })}</h2>
+            <h2 id={`${popoverId}-title`} className="text-sm font-semibold" aria-live="polite">{format(month, 'MMMM yyyy', { locale: enUS })}</h2>
             <button type="button" className="calendar-nav" aria-label="Next month" disabled={!canGoForward} onClick={() => setMonth(nextMonth)}><ChevronRight size={18} /></button>
           </div>
           <div className="grid grid-cols-7 text-center text-xs text-slate-500" role="row">
@@ -221,6 +225,8 @@ export function DateInput({ className = '', value = '', onChange, min, max, requ
           </div>
           <button type="button" className="mt-2 w-full rounded-lg py-2 text-sm font-medium text-brand hover:bg-slate-100 dark:hover:bg-slate-800" disabled={!withinRange(toIsoDate(today))} onClick={() => chooseDate(today)}>Today</button>
         </div>
+        </div>,
+        document.body,
       )}
     </span>
   );
