@@ -232,6 +232,141 @@ export function DateInput({ className = '', value = '', onChange, min, max, requ
   );
 }
 
+export function MonthInput({ className = '', value = '', onChange, disabled, id, ...props }) {
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  const popoverId = `${inputId}-months`;
+  const inputRef = useRef(null);
+  const selected = /^(\d{4})-(\d{2})$/.exec(value);
+  const selectedYear = selected ? Number(selected[1]) : null;
+  const selectedMonth = selected ? Number(selected[2]) : null;
+  const [draft, setDraft] = useState(value ? `${value.slice(5, 7)}/${value.slice(0, 4)}` : '');
+  const [year, setYear] = useState(selectedYear || new Date().getFullYear());
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setDraft(value ? `${value.slice(5, 7)}/${value.slice(0, 4)}` : '');
+    if (selectedYear) setYear(selectedYear);
+  }, [value]);
+
+  useEffect(() => {
+    if (!inputRef.current || !draft) return;
+    const match = /^(\d{2})\/(\d{4})$/.exec(draft);
+    const monthNumber = match ? Number(match[1]) : 0;
+    const valid = monthNumber >= 1 && monthNumber <= 12;
+    inputRef.current.setCustomValidity(valid ? '' : 'Enter a month in MM/YYYY format.');
+  }, [draft]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [open]);
+
+  const chooseMonth = (monthNumber) => {
+    const monthValue = `${year}-${String(monthNumber + 1).padStart(2, '0')}`;
+    setDraft(`${String(monthNumber + 1).padStart(2, '0')}/${year}`);
+    if (inputRef.current) inputRef.current.setCustomValidity('');
+    onChange?.({ target: { value: monthValue } });
+    setOpen(false);
+  };
+
+  const handleTextChange = (event) => {
+    const digits = event.target.value.replace(/\D/g, '').slice(0, 6);
+    const text = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+    event.target.value = text;
+    setDraft(text);
+    if (!text) {
+      event.target.setCustomValidity('');
+      onChange?.({ target: { value: '' } });
+      return;
+    }
+
+    const match = /^(\d{2})\/(\d{4})$/.exec(text);
+    const monthNumber = match ? Number(match[1]) : 0;
+    if (match && monthNumber >= 1 && monthNumber <= 12) {
+      event.target.setCustomValidity('');
+      onChange?.({ target: { value: `${match[2]}-${match[1]}` } });
+    } else {
+      event.target.setCustomValidity('Enter a month in MM/YYYY format.');
+    }
+  };
+
+  return (
+    <span className={`relative block ${className}`}>
+      <input
+        {...props}
+        ref={inputRef}
+        id={inputId}
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="MM/YYYY"
+        className="input date-text-input pr-12"
+        value={draft}
+        disabled={disabled}
+        onChange={handleTextChange}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls={popoverId}
+      />
+      <button
+        type="button"
+        className="absolute right-1 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50 dark:hover:bg-slate-800"
+        aria-label="Choose month"
+        aria-expanded={open}
+        aria-controls={popoverId}
+        disabled={disabled}
+        onClick={() => {
+          setYear(selectedYear || new Date().getFullYear());
+          setOpen(!open);
+        }}
+      >
+        <CalendarDays size={18} aria-hidden="true" />
+      </button>
+      {open && createPortal(
+        <div className="fixed inset-0 z-[70] grid place-items-center bg-black/30 p-4" onClick={() => setOpen(false)}>
+          <div
+            id={popoverId}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={`${popoverId}-title`}
+            className="max-h-[calc(100dvh-2rem)] w-72 max-w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <button type="button" className="calendar-nav" aria-label="Previous year" disabled={year <= 1000} onClick={() => setYear(year - 1)}><ChevronLeft size={18} /></button>
+              <h2 id={`${popoverId}-title`} className="text-sm font-semibold" aria-live="polite">{year}</h2>
+              <button type="button" className="calendar-nav" aria-label="Next year" disabled={year >= 9999} onClick={() => setYear(year + 1)}><ChevronRight size={18} /></button>
+            </div>
+            <div className="grid grid-cols-3 gap-2" role="group" aria-label={`Months in ${year}`}>
+              {Array.from({ length: 12 }, (_, monthIndex) => {
+                const monthDate = new Date(year, monthIndex, 1);
+                const selectedMonthButton = selectedYear === year && selectedMonth === monthIndex + 1;
+                return (
+                  <button
+                    key={monthIndex}
+                    type="button"
+                    className={`calendar-month ${selectedMonthButton ? 'calendar-day-selected' : ''}`}
+                    aria-pressed={Boolean(selectedMonthButton)}
+                    onClick={() => chooseMonth(monthIndex)}
+                  >
+                    {format(monthDate, 'MMM', { locale: enUS })}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </span>
+  );
+}
+
 export function SaveButton({ loading }) {
   return (
     <button className="btn btn-primary w-full" type="submit" disabled={loading}>

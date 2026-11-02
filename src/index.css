@@ -15,6 +15,7 @@ body { @apply bg-[#F8FAFC] text-[#172033] antialiased dark:bg-slate-950 dark:tex
   .date-text-input::placeholder { @apply text-slate-400 opacity-100; }
   .calendar-nav { @apply grid h-9 w-9 place-items-center rounded-lg hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800; }
   .calendar-day { @apply grid h-9 w-9 place-items-center rounded-lg text-sm hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800; }
+  .calendar-month { @apply rounded-lg py-3 text-sm hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand dark:hover:bg-slate-800; }
   .calendar-day-today { @apply font-bold text-brand; }
   .calendar-day-selected { @apply bg-brand text-white hover:bg-brand/90 dark:hover:bg-brand/90; }
 }

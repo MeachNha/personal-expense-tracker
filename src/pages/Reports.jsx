@@ -3,14 +3,14 @@ import { Download } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { api } from '../api';
-import { useLoad, useMoney, useDate, Status, Empty, PageHead, DateInput } from '../ui';
+import { useLoad, useMoney, useDate, Status, Empty, PageHead, DateInput, MonthInput } from '../ui';
 
 export default function Reports() {
   const money = useMoney(), fd = useDate();
-  const [f, setF] = useState({ session_id: '', from: '', to: '' });
-  const setFilter = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const [f, setF] = useState({ session_id: '', from: '', to: '', month: '' });
+  const setFilter = (k) => (e) => setF({ ...f, [k]: e.target.value, ...(k === 'from' || k === 'to' ? { month: '' } : {}) });
   const meta = useLoad(() => api('/sessions'), []);
-  const qs = new URLSearchParams(Object.entries(f).filter(([, v]) => v)).toString();
+  const qs = new URLSearchParams(Object.entries(f).filter(([k, v]) => k !== 'month' && v)).toString();
   const ex = useLoad(() => api('/expenses?sort=expense_date&dir=asc&' + qs), [qs]);
 
   const sessions = meta.data || [], rows = ex.data || [];
@@ -34,9 +34,9 @@ export default function Reports() {
     a.download = 'expenses.csv'; a.click();
   }
   const month = (e) => {
-    if (!e.target.value) return setF({ ...f, from: '', to: '' });
+    if (!e.target.value) return setF({ ...f, month: '', from: '', to: '' });
     const d = parseISO(e.target.value + '-01');
-    setF({ ...f, from: format(startOfMonth(d), 'yyyy-MM-dd'), to: format(endOfMonth(d), 'yyyy-MM-dd') });
+    setF({ ...f, month: e.target.value, from: format(startOfMonth(d), 'yyyy-MM-dd'), to: format(endOfMonth(d), 'yyyy-MM-dd') });
   };
 
   return (
@@ -46,7 +46,7 @@ export default function Reports() {
         <select className="input col-span-2 lg:col-span-1" value={f.session_id} onChange={setFilter('session_id')}><option value="">All sessions</option>{sessions.map((s) => <option key={s.id} value={s.id}>{s.session_name}</option>)}</select>
         <DateInput value={f.from} onChange={setFilter('from')} aria-label="From date" />
         <DateInput value={f.to} onChange={setFilter('to')} aria-label="To date" />
-        <input type="month" className="input" onChange={month} aria-label="Month filter (analysis only)" />
+        <MonthInput value={f.month} onChange={month} aria-label="Month filter (analysis only)" />
       </div>
       <Status loading={ex.loading} error={ex.error} onRetry={ex.reload} />
       {!ex.loading && !ex.error && (!rows.length ? <Empty text="No expenses match these filters." /> : (
