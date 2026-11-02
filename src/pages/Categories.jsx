@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { api } from '../api';
-import { useLoad, Status, Empty, Modal, Field, PageHead, CatIcon, ICONS } from '../ui';
+import { useLoad, Status, Empty, Modal, Field, PageHead, CatIcon, ICONS, SaveButton } from '../ui';
 
 export default function Categories() {
-  const [form, setForm] = useState(null), [err, setErr] = useState('');
+  const [form, setForm] = useState(null), [err, setErr] = useState(''), [saving, setSaving] = useState(false);
   const { data, loading, error, reload } = useLoad(() => api('/categories'), []);
 
   async function save(e) {
     e.preventDefault(); setErr('');
+    if (saving) return;
+    setSaving(true);
     try {
       const body = { name: form.name, icon: form.icon, color: form.color };
       await api(form.id ? `/categories/${form.id}` : '/categories', { method: form.id ? 'PUT' : 'POST', body });
       setForm(null); reload();
     } catch (x) { setErr(x.message); }
+    finally { setSaving(false); }
   }
   async function del(c) {
     if (!confirm(`Delete "${c.name}"?`)) return;
@@ -37,7 +40,7 @@ export default function Categories() {
         ))}
       </div>
       {form && (
-        <Modal title={form.id ? 'Edit category' : 'New category'} onClose={() => setForm(null)}>
+        <Modal title={form.id ? 'Edit category' : 'New category'} onClose={() => setForm(null)} busy={saving}>
           <form onSubmit={save} className="space-y-3">
             <Field label="Name"><input className="input" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
             <Field label="Icon">
@@ -49,7 +52,7 @@ export default function Categories() {
             </Field>
             <Field label="Color"><input type="color" className="h-11 w-full rounded-xl border border-slate-300 bg-transparent p-1 dark:border-slate-700" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} /></Field>
             {err && <p className="text-sm text-red-600">{err}</p>}
-            <button className="btn btn-primary w-full">Save</button>
+            <SaveButton loading={saving} />
           </form>
         </Modal>
       )}

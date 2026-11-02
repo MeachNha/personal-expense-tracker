@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { format, parseISO } from 'date-fns';
-import { X, Utensils, Car, ShoppingBag, Receipt, HeartPulse, Film, Users, GraduationCap, Package, Home, Plane, Gift } from 'lucide-react';
+import { CalendarDays, LoaderCircle, X, Utensils, Car, ShoppingBag, Receipt, HeartPulse, Film, Users, GraduationCap, Package, Home, Plane, Gift } from 'lucide-react';
 
 export const ICONS = { utensils: Utensils, car: Car, 'shopping-bag': ShoppingBag, receipt: Receipt, 'heart-pulse': HeartPulse, film: Film, users: Users, 'graduation-cap': GraduationCap, package: Package, home: Home, plane: Plane, gift: Gift };
 export const CatIcon = ({ name, color }) => {
@@ -8,12 +8,22 @@ export const CatIcon = ({ name, color }) => {
   return <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl" style={{ background: (color || '#64748B') + '22', color: color || '#64748B' }}><I size={18} /></span>;
 };
 
-const DEFAULTS = { currency: 'USD', theme: 'system', dateFormat: 'MMM d, yyyy' };
+const DEFAULTS = { currency: 'KHR', theme: 'system', dateFormat: 'MMM d, yyyy' };
+const SETTINGS_VERSION = '2';
 const Ctx = createContext();
 export const useApp = () => useContext(Ctx);
 
 export function AppProvider({ children }) {
-  const [settings, setSettings] = useState(() => { try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem('settings') || '{}') }; } catch { return DEFAULTS; } });
+  const [settings, setSettings] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('settings') || '{}');
+      if (localStorage.getItem('settingsVersion') !== SETTINGS_VERSION) {
+        if (saved.currency === 'USD') saved.currency = 'KHR';
+        localStorage.setItem('settingsVersion', SETTINGS_VERSION);
+      }
+      return { ...DEFAULTS, ...saved };
+    } catch { return DEFAULTS; }
+  });
   const [sessionId, setSessionId] = useState(localStorage.getItem('sessionId') || '');
   useEffect(() => {
     localStorage.setItem('settings', JSON.stringify(settings));
@@ -45,11 +55,29 @@ export const Empty = ({ text }) => <p className="py-10 text-center text-sm text-
 export const Field = ({ label, children }) => <label className="block text-sm"><span className="mb-1 block font-medium">{label}</span>{children}</label>;
 export const PageHead = ({ title, children }) => <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-semibold">{title}</h1><div className="flex flex-wrap gap-2">{children}</div></div>;
 
-export function Modal({ title, onClose, children }) {
+export function DateInput({ className = '', ...props }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={onClose}>
+    <span className={`relative block ${className}`}>
+      <input type="date" className="input date-input pr-10" {...props} />
+      <CalendarDays className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+    </span>
+  );
+}
+
+export function SaveButton({ loading }) {
+  return (
+    <button className="btn btn-primary w-full" type="submit" disabled={loading}>
+      {loading && <LoaderCircle className="animate-spin" size={16} aria-hidden="true" />}
+      {loading ? 'Saving…' : 'Save'}
+    </button>
+  );
+}
+
+export function Modal({ title, onClose, busy = false, children }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" onClick={() => { if (!busy) onClose(); }}>
       <div className="card max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-b-none p-5 sm:rounded-b-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">{title}</h2><button onClick={onClose} aria-label="Close"><X size={20} /></button></div>
+        <div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-semibold">{title}</h2><button onClick={onClose} disabled={busy} aria-label="Close"><X size={20} /></button></div>
         {children}
       </div>
     </div>

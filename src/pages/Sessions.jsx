@@ -1,23 +1,26 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2, Lock, Unlock, ExternalLink } from 'lucide-react';
 import { api } from '../api';
-import { useApp, useLoad, useMoney, useDate, Status, Empty, Modal, Field, PageHead, today } from '../ui';
+import { useApp, useLoad, useMoney, useDate, Status, Empty, Modal, Field, PageHead, DateInput, SaveButton, today } from '../ui';
 
 export default function Sessions() {
   const money = useMoney(), fd = useDate();
   const { setSessionId } = useApp();
-  const [q, setQ] = useState(''), [st, setSt] = useState(''), [form, setForm] = useState(null), [err, setErr] = useState('');
+  const [q, setQ] = useState(''), [st, setSt] = useState(''), [form, setForm] = useState(null), [err, setErr] = useState(''), [saving, setSaving] = useState(false);
   const { data, loading, error, reload } = useLoad(() => api('/sessions'), []);
   const rows = (data || []).filter((s) => (!st || s.status === st) && s.session_name.toLowerCase().includes(q.toLowerCase()));
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   async function save(e) {
     e.preventDefault(); setErr('');
+    if (saving) return;
+    setSaving(true);
     try {
       const body = { session_name: form.session_name, start_date: form.start_date, end_date: form.end_date, salary: Number(form.salary) || 0, notes: form.notes || null };
       await api(form.id ? `/sessions/${form.id}` : '/sessions', { method: form.id ? 'PUT' : 'POST', body });
       setForm(null); reload();
     } catch (x) { setErr(x.message); }
+    finally { setSaving(false); }
   }
   async function toggle(s) { await api(`/sessions/${s.id}`, { method: 'PUT', body: { status: s.status === 'active' ? 'closed' : 'active' } }); reload(); }
   async function del(s) {
@@ -63,17 +66,17 @@ export default function Sessions() {
         ))}
       </div>
       {form && (
-        <Modal title={form.id ? 'Edit session' : 'New session'} onClose={() => setForm(null)}>
+        <Modal title={form.id ? 'Edit session' : 'New session'} onClose={() => setForm(null)} busy={saving}>
           <form onSubmit={save} className="space-y-3">
             <Field label="Session name"><input className="input" required value={form.session_name} onChange={set('session_name')} /></Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Start date"><input type="date" className="input" required value={form.start_date} onChange={set('start_date')} /></Field>
-              <Field label="End date"><input type="date" className="input" required min={form.start_date} value={form.end_date} onChange={set('end_date')} /></Field>
+              <Field label="Start date"><DateInput required value={form.start_date} onChange={set('start_date')} /></Field>
+              <Field label="End date"><DateInput required min={form.start_date} value={form.end_date} onChange={set('end_date')} /></Field>
             </div>
             <Field label="Salary"><input type="number" min="0" step="0.01" className="input" value={form.salary} onChange={set('salary')} /></Field>
             <Field label="Notes"><textarea className="input" rows="2" value={form.notes} onChange={set('notes')} /></Field>
             {err && <p className="text-sm text-red-600">{err}</p>}
-            <button className="btn btn-primary w-full">Save</button>
+            <SaveButton loading={saving} />
           </form>
         </Modal>
       )}

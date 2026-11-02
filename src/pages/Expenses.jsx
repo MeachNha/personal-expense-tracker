@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { api } from '../api';
-import { useApp, useLoad, useMoney, useDate, Status, Empty, Modal, Field, PageHead, CatIcon, today } from '../ui';
+import { useApp, useLoad, useMoney, useDate, Status, Empty, Modal, Field, PageHead, CatIcon, DateInput, SaveButton, today } from '../ui';
 
 const Actions = ({ onEdit, onDel }) => (
   <div className="flex gap-1">
@@ -14,7 +14,7 @@ export default function Expenses() {
   const money = useMoney(), fd = useDate();
   const { sessionId } = useApp();
   const [f, setF] = useState({ q: '', session_id: '', category_id: '', from: '', to: '', sort: 'expense_date', dir: 'desc' });
-  const [form, setForm] = useState(null), [err, setErr] = useState('');
+  const [form, setForm] = useState(null), [err, setErr] = useState(''), [saving, setSaving] = useState(false);
   const setFilter = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
   const meta = useLoad(() => Promise.all([api('/sessions'), api('/categories')]), []);
@@ -25,13 +25,16 @@ export default function Expenses() {
 
   async function save(e) {
     e.preventDefault(); setErr('');
+    if (saving) return;
     if (!(Number(form.amount) > 0)) return setErr('Amount must be greater than zero');
     if (!form.session_id || !form.category_id || !form.expense_date) return setErr('Session, category and date are required');
+    setSaving(true);
     try {
       const body = { session_id: form.session_id, category_id: form.category_id, expense_date: form.expense_date, amount: Number(form.amount), description: form.description || null, notes: form.notes || null };
       await api(form.id ? `/expenses/${form.id}` : '/expenses', { method: form.id ? 'PUT' : 'POST', body });
       setForm(null); ex.reload();
     } catch (x) { setErr(x.message); }
+    finally { setSaving(false); }
   }
   async function del(e) { if (confirm('Delete this expense?')) { try { await api(`/expenses/${e.id}`, { method: 'DELETE' }); ex.reload(); } catch (x) { alert(x.message); } } }
   const add = () => { setErr(''); setForm({ session_id: sessions.find((s) => s.id === sessionId)?.id || sessions[0]?.id || '', category_id: cats[0]?.id || '', expense_date: today(), description: '', amount: '', notes: '' }); };
@@ -44,8 +47,8 @@ export default function Expenses() {
         <input className="input col-span-2 lg:col-span-4" placeholder="Search description or notes…" value={f.q} onChange={setFilter('q')} />
         <select className="input" value={f.session_id} onChange={setFilter('session_id')}><option value="">All sessions</option>{sessions.map((s) => <option key={s.id} value={s.id}>{s.session_name}</option>)}</select>
         <select className="input" value={f.category_id} onChange={setFilter('category_id')}><option value="">All categories</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-        <input type="date" className="input" value={f.from} onChange={setFilter('from')} aria-label="From date" />
-        <input type="date" className="input" value={f.to} onChange={setFilter('to')} aria-label="To date" />
+        <DateInput value={f.from} onChange={setFilter('from')} aria-label="From date" />
+        <DateInput value={f.to} onChange={setFilter('to')} aria-label="To date" />
         <select className="input" value={f.sort} onChange={setFilter('sort')}><option value="expense_date">Sort by date</option><option value="amount">Sort by amount</option></select>
         <select className="input" value={f.dir} onChange={setFilter('dir')}><option value="desc">Descending</option><option value="asc">Ascending</option></select>
       </div>
@@ -80,18 +83,18 @@ export default function Expenses() {
       )}
 
       {form && (
-        <Modal title={form.id ? 'Edit expense' : 'Add expense'} onClose={() => setForm(null)}>
+        <Modal title={form.id ? 'Edit expense' : 'Add expense'} onClose={() => setForm(null)} busy={saving}>
           <form onSubmit={save} className="space-y-3">
             <Field label="Session"><select className="input" required value={form.session_id} onChange={set('session_id')}><option value="" disabled>Select…</option>{sessions.map((s) => <option key={s.id} value={s.id}>{s.session_name}</option>)}</select></Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Date"><input type="date" className="input" required value={form.expense_date} onChange={set('expense_date')} /></Field>
+              <Field label="Date"><DateInput required value={form.expense_date} onChange={set('expense_date')} /></Field>
               <Field label="Amount"><input type="number" inputMode="decimal" min="0.01" step="0.01" className="input" required value={form.amount} onChange={set('amount')} /></Field>
             </div>
             <Field label="Category"><select className="input" required value={form.category_id} onChange={set('category_id')}><option value="" disabled>Select…</option>{cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
             <Field label="Description"><input className="input" value={form.description} onChange={set('description')} /></Field>
             <Field label="Notes"><textarea className="input" rows="2" value={form.notes} onChange={set('notes')} /></Field>
             {err && <p className="text-sm text-red-600">{err}</p>}
-            <button className="btn btn-primary w-full">Save</button>
+            <SaveButton loading={saving} />
           </form>
         </Modal>
       )}

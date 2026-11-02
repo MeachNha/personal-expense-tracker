@@ -3,7 +3,7 @@ import { Download } from 'lucide-react';
 import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { api } from '../api';
-import { useLoad, useMoney, useDate, Status, Empty, PageHead } from '../ui';
+import { useLoad, useMoney, useDate, Status, Empty, PageHead, DateInput } from '../ui';
 
 export default function Reports() {
   const money = useMoney(), fd = useDate();
@@ -44,8 +44,8 @@ export default function Reports() {
       <PageHead title="Reports"><button className="btn" onClick={exportCsv} disabled={!rows.length}><Download size={18} />Export CSV</button></PageHead>
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <select className="input col-span-2 lg:col-span-1" value={f.session_id} onChange={setFilter('session_id')}><option value="">All sessions</option>{sessions.map((s) => <option key={s.id} value={s.id}>{s.session_name}</option>)}</select>
-        <input type="date" className="input" value={f.from} onChange={setFilter('from')} aria-label="From date" />
-        <input type="date" className="input" value={f.to} onChange={setFilter('to')} aria-label="To date" />
+        <DateInput value={f.from} onChange={setFilter('from')} aria-label="From date" />
+        <DateInput value={f.to} onChange={setFilter('to')} aria-label="To date" />
         <input type="month" className="input" onChange={month} aria-label="Month filter (analysis only)" />
       </div>
       <Status loading={ex.loading} error={ex.error} onRetry={ex.reload} />
