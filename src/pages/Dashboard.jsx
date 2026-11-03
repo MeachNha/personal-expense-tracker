@@ -6,7 +6,7 @@ import { useApp, useLoad, useMoney, useDate, Status, Empty, CatIcon } from '../u
 const Stat = ({ icon: I, label, value, tone = '' }) => (
   <div className="card hover:shadow-md">
     <div className="flex items-center justify-between text-sm text-slate-500">{label}<I size={18} /></div>
-    <p className={`mt-2 truncate text-2xl font-semibold ${tone}`}>{value}</p>
+    <p className={`mt-2 break-all text-lg font-semibold sm:text-2xl ${tone}`}>{value}</p>
   </div>
 );
 
@@ -90,7 +90,7 @@ export default function Dashboard() {
             <div key={e.id} className="flex items-center gap-3 border-t border-slate-100 py-2 first:border-0 dark:border-slate-800">
               <CatIcon name={e.categories?.icon} color={e.categories?.color} />
               <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{e.description || e.categories?.name}</p><p className="text-xs text-slate-500">{fd(e.expense_date)}</p></div>
-              <p className="text-sm font-semibold">{money(e.amount)}</p>
+              <p className="shrink-0 whitespace-nowrap text-sm font-semibold">{money(e.amount)}</p>
             </div>
           ))}
         </div>

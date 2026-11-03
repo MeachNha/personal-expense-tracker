@@ -60,7 +60,7 @@ export default function Expenses() {
           <div key={e.id} className="card flex items-center gap-3 p-3">
             <CatIcon name={e.categories?.icon} color={e.categories?.color} />
             <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{e.description || e.categories?.name}</p><p className="truncate text-xs text-slate-500">{fd(e.expense_date)} · {e.sessions?.session_name}</p></div>
-            <div className="text-right"><p className="text-sm font-semibold">{money(e.amount)}</p><Actions onEdit={() => edit(e)} onDel={() => del(e)} /></div>
+            <div className="shrink-0 text-right"><p className="whitespace-nowrap text-sm font-semibold">{money(e.amount)}</p><Actions onEdit={() => edit(e)} onDel={() => del(e)} /></div>
           </div>
         ))}
       </div>

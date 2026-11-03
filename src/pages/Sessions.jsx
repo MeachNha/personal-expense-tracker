@@ -50,10 +50,10 @@ export default function Sessions() {
               <div className="min-w-0"><p className="truncate font-semibold">{s.session_name}</p><p className="text-xs text-slate-500">{fd(s.start_date)} – {fd(s.end_date)}</p></div>
               <span className={`rounded-full px-2 py-0.5 text-xs ${s.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400' : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}`}>{s.status}</span>
             </div>
-            <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-              <div><dt className="text-xs text-slate-500">Salary</dt><dd className="truncate font-medium">{money(s.salary)}</dd></div>
-              <div><dt className="text-xs text-slate-500">Spent</dt><dd className="truncate font-medium text-red-600">{money(s.total_expenses)}</dd></div>
-              <div><dt className="text-xs text-slate-500">Left</dt><dd className={`truncate font-medium ${s.remaining_balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{money(s.remaining_balance)}</dd></div>
+            <dl className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
+              <div><dt className="text-xs text-slate-500">Salary</dt><dd className="break-all font-medium">{money(s.salary)}</dd></div>
+              <div><dt className="text-xs text-slate-500">Spent</dt><dd className="break-all font-medium text-red-600">{money(s.total_expenses)}</dd></div>
+              <div><dt className="text-xs text-slate-500">Left</dt><dd className={`break-all font-medium ${s.remaining_balance < 0 ? 'text-red-600' : 'text-green-600'}`}>{money(s.remaining_balance)}</dd></div>
             </dl>
             {s.notes && <p className="mt-2 text-xs text-slate-500">{s.notes}</p>}
             <div className="mt-3 flex flex-wrap gap-2">
